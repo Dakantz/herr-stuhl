@@ -3,7 +3,6 @@ import * as THREE from 'three';
 
 import { MTLLoader } from 'three/addons/loaders/MTLLoader.js';
 import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { onMounted, ref } from 'vue';
 import { LineMaterial, Wireframe, WireframeGeometry2 } from 'three/examples/jsm/Addons.js';
 import { update } from 'three/examples/jsm/libs/tween.module.js';
@@ -12,7 +11,7 @@ const stool_ref = ref<HTMLElement | null>(null);
 defineProps<{}>()
 
 
-let camera: THREE.OrthographicCamera, scene: THREE.Scene, renderer: THREE.WebGLRenderer, controls: OrbitControls;
+let camera: THREE.OrthographicCamera, scene: THREE.Scene, renderer: THREE.WebGLRenderer;
 let rotation_speed = 0.01;
 let angle = 0;
 onMounted(() => {
