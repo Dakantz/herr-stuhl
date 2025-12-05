@@ -34,6 +34,13 @@ body {
 }
 
 .main_description {
-  color: #7bd185;
+  color: #f3fff5;
+}
+a {
+  color: #f3e6ff;
+  text-decoration: underline dotted;
+}
+a:hover {
+  text-decoration: underline dashed;
 }
 </style>

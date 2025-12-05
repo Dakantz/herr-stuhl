@@ -57,20 +57,21 @@ async function init() {
   objLoader.setMaterials(materials); // optional since OBJ assets can be loaded without an accompanying MTL file
 
   const object = await objLoader.loadAsync('stool.obj');
-  let avg = new THREE.Vector3();
-  let count = 0;
-  for (let vert of object.children) {
-    if ((vert as THREE.Mesh).isMesh) {
-      let position = (vert as THREE.Mesh).geometry.attributes.position;
-      if (!position) continue;
+  let min_extent = new THREE.Vector3(Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY);
+  let max_extent = new THREE.Vector3(Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY);
+  object.traverse((child) => {
+    if ((child as THREE.Mesh).isMesh) {
+      let position = (child as THREE.Mesh).geometry.attributes.position;
+      if (!position) return;
       for (let i = 0; i < position.count; i++) {
         let vertex = new THREE.Vector3().fromBufferAttribute(position, i);
-        avg.add(vertex);
-        count++;
+        min_extent.min(vertex);
+        max_extent.max(vertex);
       }
     }
-  }
-  avg.divideScalar(count);
+  });
+  let avg = new THREE.Vector3(0, 0, 0);
+  avg.divideScalar(2);
   let offset = avg.multiplyScalar(-1);
   object.traverse((child) => {
     if ((child as THREE.Mesh).isMesh) {
