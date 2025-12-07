@@ -6,6 +6,7 @@ import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
 import { onMounted, ref } from 'vue';
 import { LineMaterial, Wireframe, WireframeGeometry2 } from 'three/examples/jsm/Addons.js';
 import { update } from 'three/examples/jsm/libs/tween.module.js';
+import { max, min } from 'three/tsl';
 
 const stool_ref = ref<HTMLElement | null>(null);
 defineProps<{}>()
@@ -14,18 +15,16 @@ defineProps<{}>()
 let camera: THREE.OrthographicCamera, scene: THREE.Scene, renderer: THREE.WebGLRenderer;
 let rotation_speed = 0.01;
 let angle = 0;
+let group_obj = new THREE.Group();
 onMounted(() => {
   init();
 
   setInterval(() => {
     angle += rotation_speed;
-    scene_objects.forEach((obj) => {
-      obj.rotation.x = angle;
-    });
+    group_obj.rotation.x = angle;
     update();
-  }, 10);
+  }, 20);
 });
-const scene_objects: THREE.Object3D[] = [];
 async function init() {
   // aspect
   let rect = stool_ref.value?.getBoundingClientRect();
@@ -59,23 +58,34 @@ async function init() {
   const object = await objLoader.loadAsync('stool.obj');
   let min_extent = new THREE.Vector3(Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY);
   let max_extent = new THREE.Vector3(Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY);
+  let center = new THREE.Vector3(0, 0, 0);
   object.traverse((child) => {
     if ((child as THREE.Mesh).isMesh) {
-      let position = (child as THREE.Mesh).geometry.attributes.position;
+      let geom = (child as THREE.Mesh).geometry;
+      geom.computeBoundingBox();
+      let bbox = geom.boundingBox
+      if (!bbox) return;
+      center.copy(bbox.getCenter(new THREE.Vector3()));
+      let position = geom.attributes.position;
       if (!position) return;
       for (let i = 0; i < position.count; i++) {
         let vertex = new THREE.Vector3().fromBufferAttribute(position, i);
-        min_extent.min(vertex);
-        max_extent.max(vertex);
+        min_extent = min_extent.min(vertex);
+        max_extent = max_extent.max(vertex);
+        // let helper = new THREE.AxesHelper(0.2);
+        // helper.position.copy(vertex);
+        // scene.add(helper);
       }
     }
   });
-  let avg = new THREE.Vector3(0, 0, 0);
-  avg.divideScalar(2);
-  let offset = avg.multiplyScalar(-1);
+  // let avg = max_extent.multiplyScalar(-1).add(min_extent).multiplyScalar(0.5);
+  // avg.divideScalar(2);
+  let offset = center.multiplyScalar(-1).add(new THREE.Vector3(0, 1, 0));
+  console.log('min_extent', min_extent);
+  console.log('max_extent', max_extent);
+  console.log('offset', offset);
   object.traverse((child) => {
     if ((child as THREE.Mesh).isMesh) {
-
       const geometry = new WireframeGeometry2((child as THREE.Mesh).geometry);
 
       let matLine = new LineMaterial({
@@ -90,20 +100,20 @@ async function init() {
       wireframe.computeLineDistances();
       wireframe.scale.set(1, 1, 1);
       wireframe.position.copy(offset);
-      scene.add(wireframe);
-      scene_objects.push(wireframe);
+      group_obj.add(wireframe);
     }
   });
   object.position.copy(offset);
-  scene.add(object);
-  scene_objects.push(object);
+  group_obj.add(object);
+  scene.add(group_obj);
   //
 
-  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true });
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(rect.width, rect.height);
   renderer.setAnimationLoop(animate);
   renderer.setClearColor(0x000000ff, 0);
+
   const container = stool_ref.value;
   if (container) {
     container.appendChild(renderer.domElement);
@@ -149,8 +159,8 @@ function animate() {
 
 <style scoped>
 #stool-container {
-  width: 80vh;
-  height: 80vh;
+  width: 512px;
+  height: 512px;
   overflow: hidden;
 }
 </style>
