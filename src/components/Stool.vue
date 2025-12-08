@@ -6,7 +6,6 @@ import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
 import { onMounted, ref } from 'vue';
 import { LineMaterial, Wireframe, WireframeGeometry2 } from 'three/examples/jsm/Addons.js';
 import { update } from 'three/examples/jsm/libs/tween.module.js';
-import { max, min } from 'three/tsl';
 
 const stool_ref = ref<HTMLElement | null>(null);
 defineProps<{}>()
